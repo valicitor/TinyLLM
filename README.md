@@ -20,17 +20,6 @@
 
 ---
 
-## 🛠️ Project Structure
-src/
-├── model.rs # Transformer blocks, attention, and parameters
-├── train.rs # Training loop and Adam optimizer
-├── generate.rs # Text sampling from the trained model
-├── tokenizer.rs # Character-level tokenizer
-├── checkpoint.rs # Save/load model + optimizer state
-├── main.rs # CLI entry point (train/generate)
-
----
-
 ## 🚀 Getting Started
 
 ### 1. Clone the repo
