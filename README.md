@@ -142,4 +142,5 @@ MIT License. See [LICENSE](./LICENSE) for details.
 ## 🙏 Credits
 
 This project was inspired by [Karpathy's nanoGPT](https://github.com/karpathy/nanoGPT), reimagined in safe, performant Rust.
-```
+
+---
