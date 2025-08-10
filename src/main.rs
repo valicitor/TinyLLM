@@ -1,141 +1,268 @@
-mod attention;
-mod model;
-mod tokenizer;
-mod checkpoint;
-mod train;
-mod utils;
-mod error;
+use clap::{Parser, Subcommand};
+use std::path::PathBuf;
+use tinyllm::{
+    model::{LanguageModel, ModelConfig},
+    tokenizer::{Tokenizer, SimpleTokenizer, BPETokenizer},
+    utils::io,
+};
 
-use std::{env, fs};
-use model::ModelState;
-use tokenizer::Tokenizer;
-use train::train_from_file;
+// #[derive(Parser)]
+// #[command(name = "TinyLLM")]
+// #[command(version = "0.1.0")]
+// #[command(about = "A minimal LLM implementation in Rust", long_about = None)]
+// struct Cli {
+//     #[command(subcommand)]
+//     command: Commands,
+// }
 
-/// Configuration for the LLM model
-#[derive(Clone, Debug)]
-pub struct ModelConfig {
-    pub block_size: usize,      // Context window size
-    pub embed_dim: usize,       // Embedding dimension
-    pub learning_rate: f32,     // Default learning rate
-    pub dropout_rate: f32,      // Dropout probability
-    pub temperature: f32,       // Sampling temperature
-    pub top_k: Option<usize>,   // Top-k sampling (None for no limit)
-}
-
-impl Default for ModelConfig {
-    fn default() -> Self {
-        Self {
-            block_size: 256,
-            embed_dim: 512,
-            learning_rate: 0.001,
-            dropout_rate: 0.1,
-            temperature: 0.8,
-            top_k: Some(40),
-        }
-    }
-}
-
-/// Main CLI interface for the LLM
-struct TinyLLM {
-    model: ModelState,
-    tokenizer: Tokenizer,
-    config: ModelConfig,
-}
-
-impl TinyLLM {
-    /// Initialize or load a model
-    pub fn new(config: ModelConfig, data_path: &str) -> Self {
-        let text = fs::read_to_string(data_path)
-            .expect("Failed to load dataset");
-        let tokenizer = Tokenizer::from_text(&text);
+//#[derive(Subcommand)]
+//enum Commands {
+    /// Train a new model
+    // Train {
+    //     /// Path to training data
+    //     #[arg(short, long)]
+    //     data_path: PathBuf,
         
-        let model = ModelState::load("model.bin")
-            .unwrap_or_else(|| {
-                println!("Initializing new model...");
-                ModelState::new(
-                    config.block_size,
-                    tokenizer.vocab_size,
-                    config.embed_dim,
-                )
-            });
-
-        Self { model, tokenizer, config }
-    }
-
-    /// Train the model
-    pub fn train(&mut self, epochs: usize, seq_len: usize) {
-        train_from_file(
-            &mut self.model,
-            &self.tokenizer,
-            "data/tiny_shakespeare.txt",
-            epochs,
-            self.config.learning_rate,
-            seq_len,
-            self.config.temperature,
-            self.config.top_k,
-            10, // checkpoint interval
-        ).expect("Training failed");
+    //     /// Path to save trained model
+    //     #[arg(short, long)]
+    //     output_path: Option<PathBuf>,
         
-        self.model.save("model.bin")
-            .expect("Failed to save model");
-    }
+    //     /// Use BPE tokenizer instead of simple tokenizer
+    //     #[arg(long)]
+    //     use_bpe: bool,
+        
+    //     /// Number of training epochs
+    //     #[arg(short, long, default_value_t = 10)]
+    //     epochs: usize,
+    // },
+    
+    /// Generate text from a prompt
+    // Generate {
+    //     /// Path to trained model
+    //     #[arg(short, long)]
+    //     model_path: PathBuf,
+        
+    //     /// Input prompt text
+    //     prompt: String,
+        
+    //     /// Number of tokens to generate
+    //     #[arg(short, long, default_value_t = 50)]
+    //     length: usize,
+        
+    //     /// Temperature for sampling
+    //     #[arg(short, long, default_value_t = 0.8)]
+    //     temperature: f32,
+    // },
+    
+    // /// Start an interactive session
+    // Interactive {
+    //     /// Path to trained model
+    //     #[arg(short, long)]
+    //     model_path: PathBuf,
+        
+    //     /// Temperature for sampling
+    //     #[arg(short, long, default_value_t = 0.8)]
+    //     temperature: f32,
+    // },
+    
+    // /// Tokenize text using the model's tokenizer
+    // Tokenize {
+    //     /// Path to model
+    //     #[arg(short, long)]
+    //     model_path: PathBuf,
+        
+    //     /// Text to tokenize
+    //     text: String,
+    // },
+//}
 
-    /// Generate text from prompt
-    pub fn generate(&self, prompt: &str, length: usize) -> String {
-        self.model.generate(
-            &self.tokenizer,
-            prompt,
-            length,
-            self.config.temperature,
-            self.config.top_k,
-        )
-    }
-
-    /// Interactive generation session
-    pub fn interactive(&self) {
-        println!("Starting interactive session (type 'quit' to exit)");
-        loop {
-            let mut prompt = String::new();
-            println!("\nEnter prompt:");
-            std::io::stdin().read_line(&mut prompt).unwrap();
-            
-            let prompt = prompt.trim();
-            if prompt.eq_ignore_ascii_case("quit") {
-                break;
-            }
-
-            let output = self.generate(prompt, 100);
-            println!("\nGenerated:\n{}", output);
-        }
-    }
+fn main() -> anyhow::Result<()> {
+    //let cli = Cli::parse();
+    
+    //match cli.command {
+        // Commands::Train {
+        //     data_path,
+        //     output_path,
+        //     use_bpe,
+        //     epochs,
+        // } => {
+        //     train_model(data_path, output_path, use_bpe, epochs)
+        // }
+        
+        // Commands::Generate {
+        //     model_path,
+        //     prompt,
+        //     length,
+        //     temperature,
+        // } => {
+        //     generate_text(model_path, prompt, length, temperature)
+        // }
+        
+        // Commands::Interactive {
+        //     model_path,
+        //     temperature,
+        // } => {
+        //     interactive_session(model_path, temperature)
+        // }
+        
+        // Commands::Tokenize { model_path, text } => {
+        //     tokenize_text(model_path, text)
+        // }
+    //}j
+    Ok(())
 }
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    let config = ModelConfig::default();
+// fn train_model(
+//     data_path: PathBuf,
+//     output_path: Option<PathBuf>,
+//     use_bpe: bool,
+//     epochs: usize,
+// ) -> anyhow::Result<()> {
+//     println!("Loading training data...");
+//     let text = io::read_to_string(&data_path)?;
+    
+//     // Initialize tokenizer
+//     println!("Initializing tokenizer...");
+//     let tokenizer: Box<dyn Tokenizer> = if use_bpe {
+//         println!("Training BPE tokenizer...");
+//         let special_tokens = vec![
+//             SpecialToken::new("[PAD]", 0),
+//             SpecialToken::new("[UNK]", 1),
+//             SpecialToken::new("[CLS]", 2),
+//         ];
+//         Box::new(BPETokenizer::train(&text, 5000, special_tokens, true)?)
+//     } else {
+//         println!("Using simple tokenizer...");
+//         Box::new(SimpleTokenizer::from_text(&text)?)
+//     };
+    
+//     // Model configuration
+//     let config = ModelConfig {
+//         vocab_size: tokenizer.vocab_size(),
+//         embed_dim: 256,
+//         num_heads: 8,
+//         block_size: 512,
+//         dropout_rate: 0.1,
+//         layer_norm_eps: 1e-5,
+//     };
+    
+//     // Initialize model
+//     println!("Initializing model...");
+//     let model = LanguageModel::new(config)?;
+    
+//     // Training configuration
+//     let train_config = TrainingConfig {
+//         epochs,
+//         batch_size: 32,
+//         learning_rate: 0.001,
+//         checkpoint_interval: 100,
+//     };
+    
+//     // Initialize trainer
+//     println!("Starting training...");
+//     let mut trainer = Trainer::new(
+//         model,
+//         Box::new(AdamOptimizer::new(train_config.learning_rate)),
+//         Metrics::new("logs")?,
+//         train_config,
+//     );
+    
+//     // Train the model
+//     trainer.train(&text, &*tokenizer)?;
+    
+//     // Save the model
+//     let output_path = output_path.unwrap_or_else(|| PathBuf::from("model.bin"));
+//     println!("Saving model to {}...", output_path.display());
+//     trainer.save_model(&output_path)?;
+    
+//     // Save tokenizer if it was trained
+//     if use_bpe {
+//         let tokenizer_path = output_path.with_extension("tokenizer.json");
+//         tokenizer.save(&tokenizer_path)?;
+//     }
+    
+//     println!("Training completed successfully!");
+//     Ok(())
+// }
 
-    match args.get(1).map(|s| s.as_str()) {
-        Some("train") => {
-            let epochs = args.get(2).and_then(|s| s.parse().ok()).unwrap_or(100);
-            let mut tinyllm = TinyLLM::new(config, "data/tiny_shakespeare.txt");
-            tinyllm.train(epochs, 32);
-        }
-        Some("generate") => {
-            let prompt = args.get(2).map(|s| s.as_str()).unwrap_or("To be, or");
-            let tinyllm = TinyLLM::new(config, "data/tiny_shakespeare.txt");
-            let output = tinyllm.generate(prompt, 200);
-            println!("Generated:\n{}", output);
-        }
-        Some("interactive") => {
-            let tinyllm = TinyLLM::new(config, "data/tiny_shakespeare.txt");
-            tinyllm.interactive();
-        }
-        _ => {
-            println!("Usage: cargo run -- [train|generate|interactive]");
-            println!("Example commands:");
-            println!("  cargo run -- train 50");
-            println!("  cargo run -- generate \"Your prompt\"");
-            println!("  cargo run -- interactive");
-        }
-    }
-}
+// fn generate_text(
+//     model_path: PathBuf,
+//     prompt: String,
+//     length: usize,
+//     temperature: f32,
+// ) -> anyhow::Result<()> {
+//     println!("Loading model...");
+//     let model = io::deserialize_from_file::<LanguageModel>(&model_path)?;
+    
+//     // Try to load BPE tokenizer first, fall back to simple
+//     let tokenizer_path = model_path.with_extension("tokenizer.json");
+//     let tokenizer: Box<dyn Tokenizer> = if tokenizer_path.exists() {
+//         Box::new(BPETokenizer::load(&tokenizer_path)?)
+//     } else {
+//         println!("No BPE tokenizer found, using simple tokenizer");
+//         Box::new(SimpleTokenizer::load_default()?)
+//     };
+    
+//     println!("Generating text...");
+//     let output = model.generate(&*tokenizer, &prompt, length, temperature, None)?;
+    
+//     println!("\nGenerated text:");
+//     println!("{}", output);
+//     Ok(())
+// }
+
+// fn interactive_session(
+//     model_path: PathBuf,
+//     temperature: f32,
+// ) -> anyhow::Result<()> {
+//     println!("Loading model...");
+//     let model = io::deserialize_from_file::<LanguageModel>(&model_path)?;
+    
+//     // Load tokenizer
+//     let tokenizer_path = model_path.with_extension("tokenizer.json");
+//     let tokenizer: Box<dyn Tokenizer> = if tokenizer_path.exists() {
+//         Box::new(BPETokenizer::load(&tokenizer_path)?)
+//     } else {
+//         Box::new(SimpleTokenizer::load_default()?)
+//     };
+    
+//     println!("Starting interactive session. Type 'quit' to exit.");
+//     let mut rl = rustyline::Editor::<()>::new()?;
+    
+//     loop {
+//         let readline = rl.readline(">> ");
+//         match readline {
+//             Ok(line) if line.trim().eq_ignore_ascii_case("quit") => break,
+//             Ok(line) => {
+//                 let output = model.generate(&*tokenizer, &line, 100, temperature, None)?;
+//                 println!("{}", output);
+//             },
+//             Err(_) => break,
+//         }
+//     }
+    
+//     println!("Goodbye!");
+//     Ok(())
+// }
+
+// fn tokenize_text(model_path: PathBuf, text: String) -> anyhow::Result<()> {
+//     // Load tokenizer
+//     let tokenizer_path = model_path.with_extension("tokenizer.json");
+//     let tokenizer: Box<dyn Tokenizer> = if tokenizer_path.exists() {
+//         Box::new(BPETokenizer::load(&tokenizer_path)?)
+//     } else {
+//         Box::new(SimpleTokenizer::load_default()?)
+//     };
+    
+//     let tokens = tokenizer.encode(&text)?;
+//     println!("Token IDs: {:?}", tokens);
+    
+//     // Show token -> ID mapping
+//     println!("\nToken mapping:");
+//     for (i, token_id) in tokens.iter().enumerate() {
+//         let token = tokenizer.decode(&[*token_id])?;
+//         println!("{:4}: {:6} -> '{}'", i, token_id, token);
+//     }
+    
+//     Ok(())
+// }
